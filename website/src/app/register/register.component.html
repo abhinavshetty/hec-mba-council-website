@@ -1,0 +1,49 @@
+<div class="card p-justify-center">
+    <div class="p-d-flex p-jc-center">
+        <img [src]="councilLogoUrl" />
+    </div>
+    <div class="p-d-flex p-jc-center">
+        <h2>Register</h2>
+    </div>
+    <div class="p-d-flex p-jc-center">
+        <h5>Are you a current HEC student? You can use your HEC email to create a new login</h5>
+    </div>
+
+    <div class="p-d-flex p-jc-center" *ngIf="!submitted">
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+                <label for="userName">Name</label>
+                <input type="text" formControlName="userName" class="form-control"
+                    [ngClass]="{ 'is-invalid': submitted && f.userName.errors }" />
+                <div *ngIf="submitted && f.userName.errors" class="invalid-feedback">
+                    <div *ngIf="f.userName.errors.required">Name is required</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="userEmail">HEC Email ID</label>
+                <input type="text" formControlName="userEmail" class="form-control"
+                    [ngClass]="{ 'is-invalid': submitted && f.userEmail.errors }" />
+                <div *ngIf="submitted && f.userEmail.errors" class="invalid-feedback">
+                    <div *ngIf="f.userEmail.errors.required">HEC Email is required</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <button [disabled]="loading" class="btn btn-primary">
+                    <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>
+                    Register
+                </button>
+            </div>
+            <div class="form-group">
+                <a routerLink="/login" class="btn btn-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div *ngIf="submitted" class="p-d-flex p-jc-center">
+        <h5>Your registration has been noted! Please check your email for your login credentials.</h5>
+    </div>
+
+    <div *ngIf="errorMessage" class="p-d-flex p-jc-center">
+        <h5>{{ errorMessage }}</h5>
+    </div>
+</div>

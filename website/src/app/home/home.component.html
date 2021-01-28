@@ -1,0 +1,49 @@
+<div class="main-content container-fluid">
+    <div class="row">
+        <p-panel header="Upcoming Events" class="col-md-8">
+            <mwl-demo-component>
+            </mwl-demo-component>
+        </p-panel>
+        <p-panel class="col-md-4">
+            <p-table #btA [columns]="headerRowsFiltered" [value]="bulletinBoardData"
+                class="table table-hover table-striped" rowExpandMode="single" dataKey="bulletinId">
+                <ng-template pTemplate="caption">
+                    <div class="p-d-flex">
+                        <span class="p-input-icon-left p-ml-auto">
+                            <input pInputText type="text" (input)="btA.filterGlobal($event.target.value, 'contains')"
+                                placeholder="Search keyword" />
+                        </span>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="body" let-bulletin let-columns="columns" let-expanded="expanded">
+
+                    <tr>
+                        <td style="width: 5%">
+                            <i [pRowToggler]="bulletin" styleClass="rowButton"
+                                [ngClass]="expanded ? 'fa fa-chevron-down' : 'fa fa-chevron-right'"></i>
+                        </td>
+                        <td *ngFor="let col of columns">
+                            <h5>{{bulletin[col.field]}}</h5>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="rowexpansion" let-product>
+                    <tr>
+                        <td [attr.colspan]="headerRowsFiltered.length + 1">
+                            <img [src]="getBulletinPoster(product)">
+                            <br>
+                            <h5 class="p-d-flex p-jc-center">{{ product.bulletinDesc }}</h5>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage" let-columns>
+                    <tr>
+                        <td [attr.colspan]="headerRowsFiltered.length">
+                            No records found
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-panel>
+    </div>
+</div>
