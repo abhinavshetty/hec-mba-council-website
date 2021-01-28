@@ -1,5 +1,7 @@
 # Compiled class file
 *.class
+*.classpath
+*.project
 
 # Log file
 *.log
@@ -26,6 +28,10 @@ hs_err_pid*
 **/.metadata/
 **/.recommenders/
 **/RemoteSystemsTempFiles/
+**/.settings/
+**/target/
+**/pid/
+**/logs/
 
 # node modules dependencies
 **/node_modules/
