@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="council.website.comms.mapper.CommsMapper">
+
+	<select id="getEmailToShareToAdmin" parameterType="map"
+		resultType="council.website.action.beans.Comms">
+		SELECT COMMS_TO as commsTo,
+		COMMS_SUBJECT as commsSubject,
+		COMMS_DETAIL_TEMPLATE as commsDetailTemplate
+		
+		FROM SOCIAL_MEDIA_COMMS_PERIODIC
+	</select>
+	
+	<update id="editEmailToShareToAdmin" parameterType="map">
+		UPDATE SOCIAL_MEDIA_COMMS_PERIODIC 
+		SET COMMS_TO = #{comms.commsTo},
+		COMMS_SUBJECT = #{comms.commsSubject},
+		COMMS_DETAIL_TEMPLATE = #{comms.commsDetailTemplate}
+		WHERE PK_COMMS_ID = 1
+	</update>
+	
+</mapper>

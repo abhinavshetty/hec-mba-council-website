@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="council.website.dao.change.mapper.ShortTradeDataManagementMapper">
+	<resultMap id="trade"
+		type="erudite.labs.dao.trade.beans.TradeVO">
+		<id property="id" column="id" />
+		<result property="marketId" column="FK_MARKET_ID" />
+		<result property="strategyId" column="FK_STRATEGY_ID" />
+		<result property="tradeTypeId" column="FK_TRADE_TYPE_ID" />
+		<result property="tradeCurrency" column="TRADE_PAIR" />
+		<result property="buyPrice" column="BUY_PRICE" />
+		<result property="buyClientOrderId" column="BUY_CLIENT_ORDER_ID" />
+		<result property="buyOrderId" column="BUY_ORDER_ID" />
+		<result property="buyTime" column="BUY_TIME" />
+		<result property="sellPrice" column="SELL_PRICE" />
+		<result property="sellClientOrderId" column="SELL_CLIENT_ORDER_ID" />
+		<result property="sellOrderId" column="SELL_ORDER_ID" />
+		<result property="sellTime" column="SELL_TIME" />
+		<result property="quantity" column="QUANTITY" />
+	</resultMap>
+
+	<insert id="addTrade"
+		parameterType="erudite.labs.dao.trade.beans.TradeVO"
+		keyColumn="id" useGeneratedKeys="true">
+		Insert into BOT_TRADES
+		(FK_MARKET_ID, FK_TRADE_TYPE_ID, FK_STRATEGY_ID,
+		FK_LIFECYCLE_ID,
+		TRADE_PAIR, BUY_PRICE, BUY_CLIENT_ORDER_ID,
+		BUY_ORDER_ID,
+		QUANTITY,
+		SELL_PRICE, SELL_CLIENT_ORDER_ID,
+		SELL_ORDER_ID, BUY_TIME, SELL_TIME)
+		values(
+		#{trade.marketId},
+		#{trade.tradeTypeId},
+		#{trade.strategyId},
+		#{trade.lifecycleId},
+		#{trade.tradeCurrency},
+		#{trade.buyPrice},
+		#{trade.buyClientOrderId},
+		#{trade.buyOrderId},
+		#{trade.quantity},
+		#{trade.sellPrice},
+		#{trade.sellClientOrderId},
+		#{trade.sellOrderId},
+		#{trade.buyTime},
+		#{trade.sellTime}
+		)
+	</insert>
+
+	<update id="updateTradesPostCancel" parameterType="map">
+		Update
+		BOT_TRADES set 
+		SELL_PRICE = null,
+		SELL_CLIENT_ORDER_ID = null,
+		SELL_ORDER_ID = null
+		where TRADE_PAIR = #{trade.tradeCurrency}
+		and FK_TRADE_TYPE_ID = #{trade.tradeTypeId}
+		and FK_MARKET_ID = #{trade.marketId}
+		and FK_STRATEGY_ID = #{trade.strategyId}
+		and	FK_LIFECYCLE_ID = #{trade.lifecycleId}
+		and SELL_TIME is null
+	</update>
+
+	<update id="updateTrade" parameterType="map">
+		Update BOT_TRADES set TRADE_PAIR = #{trade.tradeCurrency}
+		<if test="trade.buyPrice != null">,BUY_PRICE = #{trade.buyPrice}</if>
+		<if test="trade.buyClientOrderId != null">,BUY_CLIENT_ORDER_ID=#{trade.buyClientOrderId}</if>
+		<if test="trade.buyOrderId != null">,BUY_ORDER_ID=#{trade.buyOrderId}</if>
+		<if test="trade.buyTime != null">,BUY_TIME=#{trade.buyTime}</if>
+		where TRADE_PAIR = #{trade.tradeCurrency}
+		and FK_TRADE_TYPE_ID = #{trade.tradeTypeId}
+		and FK_MARKET_ID = #{trade.marketId}
+		and FK_STRATEGY_ID = #{trade.strategyId}
+		and	FK_LIFECYCLE_ID = #{trade.lifecycleId}
+		and BUY_TIME is null
+	</update>
+	
+	<update id="updateTradeForId" parameterType="map">
+		Update BOT_TRADES set TRADE_PAIR = #{trade.tradeCurrency}
+		<if test="trade.buyPrice != null">,BUY_PRICE = #{trade.buyPrice}</if>
+		<if test="trade.buyClientOrderId != null">,BUY_CLIENT_ORDER_ID=#{trade.buyClientOrderId}</if>
+		<if test="trade.buyOrderId != null">,BUY_ORDER_ID=#{trade.buyOrderId}</if>
+		<if test="trade.buyTime != null">,BUY_TIME=#{trade.buyTime}</if>
+		<if test="trade.sellPrice != null">,SELL_PRICE = #{trade.sellPrice}</if>
+		<if test="trade.sellClientOrderId != null">,SELL_CLIENT_ORDER_ID=#{trade.sellClientOrderId}</if>
+		<if test="trade.sellOrderId != null">,SELL_ORDER_ID=#{trade.sellOrderId}</if>
+		<if test="trade.sellTime != null">,SELL_TIME=#{trade.sellTime}</if>
+		where PK_TRADE_ID = #{trade.id}
+	</update>
+
+	<select id="getBotTrades"
+		resultType="erudite.labs.dao.trade.beans.TradeVO">
+		Select
+		UT.PK_TRADE_ID as id,
+		UT.FK_MARKET_ID as marketId,
+		UT.FK_TRADE_TYPE_ID as tradeTypeId,
+		UT.FK_STRATEGY_ID AS strategyId,
+		UT.FK_LIFECYCLE_ID AS lifecycleId,
+		UT.TRADE_PAIR as tradeCurrency,
+		UT.BUY_PRICE as buyPrice,
+		UT.SELL_PRICE as sellPrice,
+		UT.BUY_ORDER_ID as buyOrderId,
+		UT.BUY_CLIENT_ORDER_ID as buyClientOrderId,
+		UT.SELL_ORDER_ID as sellOrderId,
+		UT.SELL_CLIENT_ORDER_ID as sellClientOrderId,
+		UT.BUY_TIME as buyTime,
+		UT.SELL_TIME as sellTime,
+		UT.QUANTITY as quantity
+		
+		FROM BOT_TRADES UT
+		INNER JOIN MARKETS M ON M.PK_MARKET_ID = UT.FK_MARKET_ID
+		INNER JOIN BOT_STRATEGIES BS ON BS.PK_STRATEGY_ID = UT.FK_STRATEGY_ID
+		
+		WHERE 
+		M.MARKET_NAME = #{marketName} 
+		AND	BS.STRATEGY_NAME = #{strategyName}
+		AND UT.FK_TRADE_TYPE_ID = 2
+		<if test="daysPrior > 0">
+			and UT.SELL_TIME > now() - interval #{daysPrior}	day
+			and UT.BUY_TIME is not null
+		</if>
+		<if test="daysPrior == 0">
+			and UT.BUY_TIME is null
+		</if>
+		<if test="!(daysPrior > 0 or daysPrior == 0)">
+			and UT.BUY_TIME is not null
+		</if>
+		order by UT.SELL_TIME
+	</select>
+</mapper>

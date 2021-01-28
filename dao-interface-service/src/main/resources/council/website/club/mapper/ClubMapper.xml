@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="council.website.club.mapper.ClubMapper">
+
+	<select id="getAllClubs" parameterType="map"
+		resultType="council.website.club.beans.Club">
+		SELECT CLUB_NAME as clubName,
+		CLUB_LOGO_LOC as clubResource 
+		
+		FROM CLUB
+	</select>
+	
+	<insert id="addClub" parameterType="map">
+		INSERT INTO CLUB (CLUB_NAME, CLUB_LOGO_LOC)
+		VALUES (#{club.clubName}, #{club.clubResource})
+	</insert>
+	
+	<update id="updateClub" parameterType="map">
+		UPDATE CLUB 
+		SET CLUB_LOGO_LOC = #{club.clubResource}
+		
+		WHERE CLUB_NAME = #{club.clubName}
+	</update>
+	
+	<select id="getClubMetadata" parameterType="map"
+		resultType="council.website.club.beans.ClubMetadata">
+		SELECT CM.METADATA_NAME as metadataName,
+		CM.METADATA_DETAIL as metadataDetail,
+		C.CLUB_NAME AS clubName
+		
+		FROM CLUB_METADATA CM INNER JOIN CLUB C ON C.PK_CLUB_ID = CM.FK_CLUB_ID
+		WHERE C.CLUB_NAME = #{clubName}
+	</select>
+
+	<insert id="addClubMetadata" parameterType="map">
+		INSERT INTO CLUB_METADATA (FK_CLUB_ID, METADATA_NAME, METADATA_DETAIL)
+		
+		VALUES ((SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE CLUB_NAME = #{metadata.clubName}),
+		#{metadata.metadataName}, #{metadata.metadataDetail})
+	</insert>
+	
+	<update id="editClubMetadata" parameterType="map">
+		UPDATE CLUB_METADATA 
+		SET METADATA_DETAIL = #{metadata.metadataDetail}
+		
+		WHERE METADATA_NAME = #{metadata.metadataName}
+		AND FK_CLUB_ID = (SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE
+		CLUB_NAME = #{metadata.clubName})
+	</update>
+	
+	<delete id="deleteClubMetadata" parameterType="map">
+		DELETE FROM CLUB_METADATA
+		WHERE METADATA_NAME = #{club.clubResource}
+		AND FK_CLUB_ID = (SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE
+		CLUB_NAME = #{club.clubName})
+	</delete>
+
+	<select id="getClubResources" parameterType="map"
+		resultType="council.website.club.beans.Club">
+		SELECT C.CLUB_NAME as clubName,
+		R.RESOURCE_NAME as clubResource 
+		
+		FROM CLUB C INNER JOIN CLUB_RESOURCE R ON C.PK_CLUB_ID = R.FK_CLUB_ID
+		WHERE C.CLUB_NAME = #{clubName}
+	</select>
+
+	<insert id="addClubResource" parameterType="map">
+		INSERT INTO CLUB_RESOURCE (RESOURCE_NAME, FK_CLUB_ID)
+		VALUES (#{club.clubResource}, (SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE CLUB_NAME = #{club.clubName}))
+	</insert>
+
+	<delete id="deleteClubResource" parameterType="map">
+		DELETE FROM CLUB_RESOURCE
+		WHERE RESOURCE_NAME = #{club.clubResource}
+		AND FK_CLUB_ID = (SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE
+		CLUB_NAME = #{club.clubName})
+	</delete>
+</mapper>

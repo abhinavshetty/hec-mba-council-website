@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="erudite.labs.dao.admin.mapper.AdminDaoMapper">
+
+	<select id="getSelectedClientProfile" resultType="erudite.labs.dao.user.beans.ClientProfileDao">
+		SELECT
+		CLIENT_NAME AS clientName,
+		CLIENT_EMAIL AS clientEmail,
+		MARKET_ALLOCATION AS totalInvestmentAmount
+		FROM CLIENT_POOL
+		WHERE
+		CLIENT_EMAIL = #{clientEmail}
+	</select>
+
+	<select id="getTotalClientMoneyAvailable" resultType="java.math.BigDecimal">
+		SELECT
+		SUM(MARKET_ALLOCATION)
+		FROM CLIENT_POOL
+	</select>
+
+	<select id="getCurrentFundPortfolio" resultType="erudite.labs.dao.user.beans.ClientPortfolioUnit">
+		SELECT
+		B.TRADE_PAIR AS investmentSecurity,
+		TT.TRADE_TYPE_NAME AS position,
+		M.MARKET_NAME AS marketName,
+		B.QUANTITY AS quantity,
+		NULL AS currentValue,
+		CASE 
+		WHEN TT.TRADE_TYPE_NAME = 'LONG' THEN SUM(B.BUY_PRICE * B.QUANTITY) 
+		ELSE SUM(B.SELL_PRICE * B.QUANTITY) 
+		END AS moneyAmount
+		FROM BOT_TRADES B
+		INNER JOIN TRADE_TYPE TT ON B.FK_TRADE_TYPE_ID = TT.PK_TRADE_TYPE_ID
+		INNER JOIN MARKETS M ON B.FK_MARKET_ID = M.PK_MARKET_ID
+		WHERE (B.SELL_TIME IS NULL OR B.BUY_TIME IS NULL)
+		GROUP BY TT.TRADE_TYPE_NAME, B.TRADE_PAIR
+	</select>
+	
+	<update id="modifyClientProfile" parameterType="map">
+		Update
+		CLIENT_POOL set 
+		MARKET_ALLOCATION = #{marketAllocation}
+		where CLIENT_EMAIL = #{clientEmail}
+	</update>
+	
+	<update id="modifyBotStatus" parameterType="map">
+		Update
+		BOT_ALLOCATION set 
+		STATUS = #{status}
+		where PK_BOT_ID = #{id}
+	</update>
+	
+	<update id="modifyBotAllocation" parameterType="map">
+		Update
+		BOT_ALLOCATION set 
+		MARKET_ALLOCATION = #{marketAllocation}
+		where PK_BOT_ID = #{id}
+	</update>
+
+</mapper>

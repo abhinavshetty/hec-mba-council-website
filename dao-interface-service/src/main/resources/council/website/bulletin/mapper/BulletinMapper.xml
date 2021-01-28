@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="council.website.bulletin.mapper.BulletinMapper">
+
+	<select id="getBulletinsForDateRange" parameterType="map"
+		resultType="council.website.bulletin.beans.Bulletin">
+		SELECT B.PK_BULLETIN_ID AS bulletinId,
+		B.BULLETIN_TITLE AS
+		bulletinTitle,
+		B.BULLETIN_DESC as bulletinDesc,
+		B.BULLETIN_POSTER_LOC as bulletinPosterLoc,
+		C.CLUB_NAME AS clubName,
+		BULLETIN_START_TIME AS
+		bulletinStartTime,
+		BULLETIN_END_TIME AS bulletinEndTime
+
+		FROM
+		BULLETIN B
+		INNER JOIN CLUB C ON B.FK_CLUB_ID = C.PK_CLUB_ID
+		WHERE
+		<if test="startTime != null">B.BULLETIN_START_TIME &lt;= #{startTime, jdbcType=DATE}
+			AND</if>
+		<if test="endTime != null">B.BULLETIN_END_TIME &gt;= #{endTime, jdbcType=DATE} AND
+		</if>
+		<if test="clubName != null">C.CLUB_NAME LIKE #{clubName} AND</if>
+		B.BULLETIN_TITLE IS NOT NULL
+	</select>
+
+	<select id="getWorkflowBulletinsOfStatus" parameterType="map"
+		resultType="council.website.bulletin.beans.BulletinWorkflow">
+		SELECT W.PK_BULLETIN_WORKFLOW_ID AS workflowId,
+		B.BULLETIN_TITLE AS bulletinTitle,
+		B.BULLETIN_DESC AS bulletinDesc,
+		B.BULLETIN_POSTER_LOC as bulletinPosterLoc,
+		C.CLUB_NAME AS clubName,
+		B.BULLETIN_START_TIME AS bulletinStartTime,
+		B.BULLETIN_END_TIME AS bulletinEndTime,
+		W.SUBMISSION_TIME AS submissionTime,
+		(SELECT DISTINCT S.USER_NAME FROM USER_DATA_MBA_COUNCIL S WHERE S.PK_USER_ID = W.FK_SUBMITTER_USER_ID) AS submitterUserName,
+		W.REVIEW_TIME AS reviewTime,
+		W.REVIEW_STATUS AS reviewStatus,
+		W.REVIEW_COMMENTS AS reviewComments,
+		(SELECT DISTINCT R.USER_NAME FROM USER_DATA_MBA_COUNCIL R WHERE R.PK_USER_ID =
+		W.FK_REVIEWER_USER_ID) AS reviewerUserName
+
+
+		FROM
+		BULLETIN_STAGING B INNER JOIN CLUB C ON B.FK_CLUB_ID = C.PK_CLUB_ID
+		INNER JOIN BULLETIN_WORKFLOW W ON B.PK_BULLETIN_STAGING_ID = W.FK_BULLETIN_STAGING_ID
+		WHERE
+		<if test="clubName != null">C.CLUB_NAME = #{clubName} AND</if>
+		<if test="status != null">(W.REVIEW_STATUS LIKE #{status} OR W.REVIEW_STATUS LIKE 'REJECTED') AND</if>
+		B.BULLETIN_TITLE IS NOT NULL
+	</select>
+
+	<insert id="addNewBulletin" parameterType="map">
+		INSERT INTO BULLETIN_STAGING
+		(BULLETIN_TITLE, BULLETIN_DESC, BULLETIN_POSTER_LOC, FK_CLUB_ID, BULLETIN_START_TIME,
+		BULLETIN_END_TIME)
+		VALUES
+		(#{workflow.bulletinTitle}, #{workflow.bulletinDesc}, #{workflow.bulletinPosterLoc},
+		(SELECT PK_CLUB_ID FROM CLUB WHERE CLUB_NAME = #{workflow.clubName}),
+		#{workflow.bulletinStartTime, jdbcType=DATE}, #{workflow.bulletinEndTime, jdbcType=DATE})
+	</insert>
+
+	<insert id="addNewBulletinWorkflow" parameterType="map">
+		INSERT INTO BULLETIN_WORKFLOW (FK_BULLETIN_STAGING_ID, FK_SUBMITTER_USER_ID,
+		SUBMISSION_TIME, FK_REVIEWER_USER_ID, REVIEW_TIME, REVIEW_STATUS,
+		REVIEW_COMMENTS)
+		VALUES ((SELECT PK_BULLETIN_STAGING_ID FROM BULLETIN_STAGING WHERE
+		BULLETIN_TITLE = #{workflow.bulletinTitle}),
+		(SELECT PK_USER_ID FROM USER_DATA_MBA_COUNCIL WHERE USER_NAME =
+		#{workflow.submitterUserName}), NOW(), NULL, NULL,
+		#{workflow.reviewStatus}, #{workflow.reviewComments})
+	</insert>
+
+
+	<update id="updateBulletinInStaging" parameterType="map">
+		UPDATE BULLETIN_STAGING SET BULLETIN_TITLE = #{workflow.bulletinTitle}
+		<if test="workflow.bulletinDesc != null">,BULLETIN_DESC = #{workflow.bulletinDesc}</if>
+		<if test="workflow.bulletinStartTime != null">,BULLETIN_START_TIME = #{workflow.bulletinStartTime, jdbcType=DATE}</if>
+		<if test="workflow.bulletinEndTime != null">,BULLETIN_END_TIME = #{workflow.bulletinEndTime, jdbcType=DATE}</if>
+		<if test="workflow.bulletinPosterLoc != null">,BULLETIN_POSTER_LOC = #{workflow.bulletinPosterLoc}</if>
+		WHERE BULLETIN_TITLE = #{workflow.bulletinTitle}
+		AND FK_CLUB_ID = (SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE
+		CLUB_NAME = #{workflow.clubName})
+	</update>
+	
+	<update id="updateBulletinWorkflow" parameterType="map">
+		UPDATE BULLETIN_WORKFLOW
+		SET REVIEW_STATUS = #{workflow.reviewStatus} 
+		
+		<if test="workflow.reviewerUserName == null">
+		,FK_REVIEWER_USER_ID = NULL
+		,SUBMISSION_TIME = NOW()
+		,REVIEW_STATUS = #{workflow.reviewStatus}
+		</if>
+		<if test="workflow.reviewerUserName != null">
+		,REVIEW_TIME = NOW()
+		,FK_REVIEWER_USER_ID = (SELECT DISTINCT PK_USER_ID FROM USER_DATA_MBA_COUNCIL WHERE USER_NAME = #{workflow.reviewerUserName})
+		</if>
+		
+		
+		<if test="workflow.reviewComments != null">,REVIEW_COMMENTS = CONCAT(REVIEW_COMMENTS, CHAR(10), #{workflow.reviewComments})</if>
+		WHERE FK_BULLETIN_STAGING_ID = (SELECT DISTINCT PK_BULLETIN_STAGING_ID FROM BULLETIN_STAGING WHERE BULLETIN_TITLE = #{workflow.bulletinTitle})
+	</update>
+
+	<insert id="moveBulletinPostApproval" parameterType="map">
+		INSERT INTO BULLETIN
+		(BULLETIN_TITLE, BULLETIN_DESC, BULLETIN_POSTER_LOC, FK_CLUB_ID, BULLETIN_START_TIME,
+		BULLETIN_END_TIME)
+		VALUES
+		(#{workflow.bulletinTitle}, (SELECT DISTINCT BULLETIN_DESC FROM BULLETIN_STAGING WHERE BULLETIN_TITLE = #{workflow.bulletinTitle}), 
+		(SELECT DISTINCT BULLETIN_POSTER_LOC FROM BULLETIN_STAGING WHERE BULLETIN_TITLE = #{workflow.bulletinTitle}),
+		(SELECT DISTINCT FK_CLUB_ID FROM BULLETIN_STAGING WHERE BULLETIN_TITLE = #{workflow.bulletinTitle}),
+		(SELECT DISTINCT BULLETIN_START_TIME FROM BULLETIN_STAGING WHERE BULLETIN_TITLE = #{workflow.bulletinTitle}), 
+		(SELECT DISTINCT BULLETIN_END_TIME FROM BULLETIN_STAGING WHERE BULLETIN_TITLE = #{workflow.bulletinTitle}))
+	</insert>
+	
+</mapper>

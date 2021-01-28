@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="council.website.event.mapper.EventMapper">
+
+	<select id="getEventsForDateRange" parameterType="map"
+		resultType="council.website.event.beans.Event">
+		SELECT B.PK_EVENT_ID AS eventId,
+		B.EVENT_TYPE as eventType,
+		B.EVENT_NAME AS	eventName,
+		B.EVENT_DESC as eventDesc,
+		B.EVENT_PARTNERS as eventPartners,
+		B.EVENT_LANGUAGE as eventLanguage,
+		B.EVENT_ADDRESS as eventAddress,
+		B.MAX_TARGET_AUDIENCE as maxTargetAudience,
+		B.TICKET_PRICE as ticketPrice,
+		B.TICKET_PURCHASE_LINK as ticketPurchaseLink,
+		B.EVENT_POSTER_LOC as eventPosterLoc,
+		
+		C.CLUB_NAME AS host,
+		B.EVENT_START_TIME AS eventStartTime,
+		B.EVENT_END_TIME AS eventEndTime,
+		B.EVENT_REGISTRATION_START_TIME AS eventRegistrationStartTime,
+		B.EVENT_REGISTRATION_END_TIME AS eventRegistrationEndTime,
+		
+		B.FACEBOOK_LINK as facebookLink,
+		B.INSTAGRAM_LINK as instagramLink,
+		B.TWITTER_LINK as twitterLink,
+		B.DATE_TO_SHARE as dateToShare
+
+		FROM
+		MBA_COUNCIL_EVENTS B
+		INNER JOIN CLUB C ON B.FK_CLUB_ID = C.PK_CLUB_ID
+		WHERE
+		<if test="startTime != null">B.EVENT_START_TIME &gt;= #{startTime, jdbcType=DATETIMEOFFSET}
+			AND</if>
+		<if test="endTime != null">B.EVENT_END_TIME &lt;= #{endTime, jdbcType=DATETIMEOFFSET} AND
+		</if>
+		<if test="clubName != null">C.CLUB_NAME LIKE #{clubName} AND</if>
+		B.EVENT_NAME IS NOT NULL
+	</select>
+	
+	<select id="getEventsForSocialMediaShare" parameterType="map"
+		resultType="council.website.event.beans.Event">
+		SELECT B.PK_EVENT_ID AS eventId,
+		B.EVENT_TYPE as eventType,
+		B.EVENT_NAME AS	eventName,
+		B.EVENT_DESC as eventDesc,
+		B.EVENT_PARTNERS as eventPartners,
+		B.EVENT_LANGUAGE as eventLanguage,
+		B.EVENT_ADDRESS as eventAddress,
+		B.MAX_TARGET_AUDIENCE as maxTargetAudience,
+		B.TICKET_PRICE as ticketPrice,
+		B.TICKET_PURCHASE_LINK as ticketPurchaseLink,
+		B.EVENT_POSTER_LOC as eventPosterLoc,
+		
+		C.CLUB_NAME AS host,
+		B.EVENT_START_TIME AS eventStartTime,
+		B.EVENT_END_TIME AS eventEndTime,
+		B.EVENT_REGISTRATION_START_TIME AS eventRegistrationStartTime,
+		B.EVENT_REGISTRATION_END_TIME AS eventRegistrationEndTime,
+		
+		B.FACEBOOK_LINK as facebookLink,
+		B.INSTAGRAM_LINK as instagramLink,
+		B.TWITTER_LINK as twitterLink,
+		B.DATE_TO_SHARE as dateToShare
+
+		FROM
+		MBA_COUNCIL_EVENTS B
+		INNER JOIN CLUB C ON B.FK_CLUB_ID = C.PK_CLUB_ID
+		WHERE
+		B.DATE_TO_SHARE = CURDATE()
+	</select>
+
+	<select id="getWorkflowEventsOfStatus" parameterType="map"
+		resultType="council.website.event.beans.EventWorkflow">
+		SELECT W.PK_EVENT_WORKFLOW_ID AS workflowId,
+		
+		B.PK_EVENT_STAGING_ID AS eventId,
+		B.EVENT_TYPE as eventType,
+		B.EVENT_NAME AS	eventName,
+		B.EVENT_DESC as eventDesc,
+		B.EVENT_PARTNERS as eventPartners,
+		B.EVENT_LANGUAGE as eventLanguage,
+		B.EVENT_ADDRESS as eventAddress,
+		B.MAX_TARGET_AUDIENCE as maxTargetAudience,
+		B.TICKET_PRICE as ticketPrice,
+		B.TICKET_PURCHASE_LINK as ticketPurchaseLink,
+		B.EVENT_POSTER_LOC as eventPosterLoc,
+		
+		C.CLUB_NAME AS host,
+		B.EVENT_START_TIME AS eventStartTime,
+		B.EVENT_END_TIME AS eventEndTime,
+		B.EVENT_REGISTRATION_START_TIME AS eventRegistrationStartTime,
+		B.EVENT_REGISTRATION_END_TIME AS eventRegistrationEndTime,
+		
+		B.FACEBOOK_LINK as facebookLink,
+		B.INSTAGRAM_LINK as instagramLink,
+		B.TWITTER_LINK as twitterLink,
+		B.DATE_TO_SHARE as dateToShare,
+		
+		W.SUBMISSION_TIME AS submissionTime,
+		(SELECT DISTINCT S.USER_NAME FROM USER_DATA_MBA_COUNCIL S WHERE S.PK_USER_ID = W.FK_SUBMITTER_USER_ID) AS submitterUserName,
+		W.REVIEW_TIME AS reviewTime,
+		W.REVIEW_STATUS AS reviewStatus,
+		W.REVIEW_COMMENTS AS reviewComments,
+		(SELECT DISTINCT R.USER_NAME FROM USER_DATA_MBA_COUNCIL R WHERE R.PK_USER_ID =
+		W.FK_REVIEWER_USER_ID) AS reviewerUserName
+
+
+		FROM
+		MBA_COUNCIL_EVENTS_STAGING B INNER JOIN CLUB C ON B.FK_CLUB_ID = C.PK_CLUB_ID
+		INNER JOIN MBA_COUNCIL_EVENTS_WORKFLOW W ON B.PK_EVENT_STAGING_ID = W.FK_EVENT_STAGING_ID
+		WHERE
+		<if test="clubName != null">C.CLUB_NAME = #{clubName} AND</if>
+		<if test="status != null">(W.REVIEW_STATUS LIKE #{status} OR W.REVIEW_STATUS LIKE 'REJECTED') AND</if>
+		B.EVENT_NAME IS NOT NULL
+	</select>
+
+	<insert id="addNewEvent" parameterType="map">
+		INSERT INTO MBA_COUNCIL_EVENTS_STAGING
+		(EVENT_TYPE, FK_CLUB_ID, EVENT_NAME, EVENT_DESC, EVENT_PARTNERS, EVENT_LANGUAGE, EVENT_POSTER_LOC, EVENT_ADDRESS, MAX_TARGET_AUDIENCE,
+		TICKET_PRICE, TICKET_PURCHASE_LINK, EVENT_START_TIME, EVENT_REGISTRATION_START_TIME, EVENT_REGISTRATION_END_TIME,
+		EVENT_END_TIME, FACEBOOK_LINK, INSTAGRAM_LINK, TWITTER_LINK, DATE_TO_SHARE)
+		VALUES
+		(#{workflow.eventType}, (SELECT PK_CLUB_ID FROM CLUB WHERE CLUB_NAME = #{workflow.host}), #{workflow.eventName}, 
+		#{workflow.eventDesc}, #{workflow.eventPartners}, #{workflow.eventLanguage}, #{workflow.eventPosterLoc},
+		#{workflow.eventAddress}, #{workflow.maxTargetAudience}, #{workflow.ticketPrice}, #{workflow.ticketPurchaseLink}, 
+		#{workflow.eventStartTime, jdbcType=DATETIMEOFFSET }, #{workflow.eventRegistrationStartTime, jdbcType=DATETIMEOFFSET }, 
+		#{workflow.eventRegistrationEndTime, jdbcType=DATETIMEOFFSET },#{workflow.eventEndTime, jdbcType=DATETIMEOFFSET }, 
+		#{workflow.facebookLink}, #{workflow.instagramLink}, #{workflow.twitterLink}, #{workflow.dateToShare, jdbcType=DATE})
+	</insert>
+
+	<insert id="addNewEventWorkflow" parameterType="map">
+		INSERT INTO MBA_COUNCIL_EVENTS_WORKFLOW (FK_EVENT_STAGING_ID, FK_SUBMITTER_USER_ID,
+		SUBMISSION_TIME, FK_REVIEWER_USER_ID, REVIEW_TIME, REVIEW_STATUS,
+		REVIEW_COMMENTS)
+		VALUES ((SELECT PK_EVENT_STAGING_ID FROM MBA_COUNCIL_EVENTS_STAGING WHERE
+		EVENT_NAME = #{workflow.eventName}),
+		(SELECT PK_USER_ID FROM USER_DATA_MBA_COUNCIL WHERE USER_NAME =
+		#{workflow.submitterUserName}), NOW(), NULL, NULL,
+		#{workflow.reviewStatus}, #{workflow.reviewComments})
+	</insert>
+
+
+	<update id="updateEventInStaging" parameterType="map">
+		UPDATE MBA_COUNCIL_EVENTS_STAGING SET EVENT_NAME = #{workflow.eventName}
+		<if test="workflow.eventType != null">,EVENT_TYPE = #{workflow.eventType}</if>
+		<if test="workflow.eventDesc != null">,EVENT_DESC = #{workflow.eventDesc}</if>
+		<if test="workflow.eventPartners != null">,EVENT_PARTNERS = #{workflow.eventPartners}</if>
+		<if test="workflow.eventLanguage != null">,EVENT_LANGUAGE = #{workflow.eventLanguage}</if>
+		<if test="workflow.eventPosterLoc != null">,EVENT_POSTER_LOC = #{workflow.eventPosterLoc}</if>
+		<if test="workflow.eventAddress != null">,EVENT_ADDRESS = #{workflow.eventAddress}</if>
+		<if test="workflow.maxTargetAudience != null">,MAX_TARGET_AUDIENCE = #{workflow.maxTargetAudience}</if>
+		<if test="workflow.ticketPrice != null">,TICKET_PRICE = #{workflow.ticketPrice}</if>
+		<if test="workflow.ticketPurchaseLink != null">,TICKET_PURCHASE_LINK = #{workflow.ticketPurchaseLink}</if>
+		<if test="workflow.eventStartTime != null">,EVENT_START_TIME = #{workflow.eventStartTime, jdbcType=DATETIMEOFFSET }</if>
+		<if test="workflow.eventRegistrationStartTime != null">,EVENT_REGISTRATION_START_TIME = #{workflow.eventRegistrationStartTime, jdbcType=DATETIMEOFFSET }</if>
+		<if test="workflow.eventRegistrationEndTime != null">,EVENT_REGISTRATION_END_TIME = #{workflow.eventRegistrationEndTime, jdbcType=DATETIMEOFFSET }</if>
+		<if test="workflow.eventEndTime != null">,EVENT_END_TIME = #{workflow.eventEndTime, jdbcType=DATETIMEOFFSET }</if>
+		<if test="workflow.dateToShare != null">,DATE_TO_SHARE = #{workflow.dateToShare, jdbcType=DATETIMEOFFSET }</if>
+		
+		<if test="workflow.facebookLink != null">,FACEBOOK_LINK = #{workflow.facebookLink}</if>
+		<if test="workflow.instagramLink != null">,INSTAGRAM_LINK = #{workflow.instagramLink}</if>
+		<if test="workflow.twitterLink != null">,TWITTER_LINK = #{workflow.twitterLink}</if>
+		
+		WHERE EVENT_NAME = #{workflow.eventName}
+		AND FK_CLUB_ID = (SELECT DISTINCT PK_CLUB_ID FROM CLUB WHERE
+		CLUB_NAME = #{workflow.host})
+	</update>
+	
+	<update id="updateEventWorkflow" parameterType="map">
+		UPDATE MBA_COUNCIL_EVENTS_WORKFLOW
+		SET REVIEW_STATUS = #{workflow.reviewStatus} 
+		
+		<if test="workflow.reviewerUserName == null">
+		,FK_REVIEWER_USER_ID = NULL
+		,SUBMISSION_TIME = NOW()
+		,REVIEW_STATUS = #{workflow.reviewStatus}
+		</if>
+		<if test="workflow.reviewerUserName != null">
+		,REVIEW_TIME = NOW()
+		,FK_REVIEWER_USER_ID = (SELECT DISTINCT PK_USER_ID FROM USER_DATA_MBA_COUNCIL WHERE USER_NAME = #{workflow.reviewerUserName})
+		</if>
+		
+		
+		<if test="workflow.reviewComments != null">,REVIEW_COMMENTS = CONCAT(REVIEW_COMMENTS, CHAR(10), #{workflow.reviewComments})</if>
+		WHERE FK_EVENT_STAGING_ID = (SELECT DISTINCT PK_EVENT_STAGING_ID FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName})
+	</update>
+
+	<insert id="moveEventPostApproval" parameterType="map">
+		INSERT INTO MBA_COUNCIL_EVENTS
+		(EVENT_TYPE, FK_CLUB_ID, EVENT_NAME, EVENT_DESC, EVENT_PARTNERS, EVENT_LANGUAGE, EVENT_POSTER_LOC, EVENT_ADDRESS, MAX_TARGET_AUDIENCE,
+		TICKET_PRICE, TICKET_PURCHASE_LINK, EVENT_START_TIME, EVENT_REGISTRATION_START_TIME, EVENT_REGISTRATION_END_TIME,
+		EVENT_END_TIME, FACEBOOK_LINK, INSTAGRAM_LINK, TWITTER_LINK, DATE_TO_SHARE)
+		VALUES
+		((SELECT DISTINCT EVENT_TYPE FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT PK_CLUB_ID FROM CLUB WHERE CLUB_NAME = #{workflow.host}), 
+		#{workflow.eventName}, 
+		(SELECT DISTINCT EVENT_DESC FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT EVENT_PARTNERS FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT EVENT_LANGUAGE FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT EVENT_POSTER_LOC FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}),
+		(SELECT DISTINCT EVENT_ADDRESS FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT MAX_TARGET_AUDIENCE FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT TICKET_PRICE FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT TICKET_PURCHASE_LINK FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT EVENT_START_TIME FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT EVENT_REGISTRATION_START_TIME FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT EVENT_REGISTRATION_END_TIME FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}),
+		(SELECT DISTINCT EVENT_END_TIME FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT FACEBOOK_LINK FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT INSTAGRAM_LINK FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT TWITTER_LINK FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}), 
+		(SELECT DISTINCT DATE_TO_SHARE FROM MBA_COUNCIL_EVENTS_STAGING WHERE EVENT_NAME = #{workflow.eventName}))
+	</insert>
+	
+</mapper>
