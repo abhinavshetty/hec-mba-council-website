@@ -23,4 +23,9 @@
 hs_err_pid*
 
 # Metadata files
-**/metadata/
+**/.metadata/
+**/.recommenders/
+**/RemoteSystemsTempFiles/
+
+# node modules dependencies
+**/node_modules/
