@@ -137,5 +137,9 @@ public class UserService {
 	public List<UserLoginRequest> getUserCredentials(UserLoginRequest request) {
 		return userDataMapper.getUserCredentials(request);
 	}
+	
+	public List<UserLoginRequest> getSystemCredentials() {
+		return userDataMapper.getSystemCredentials();
+	}
 
 }

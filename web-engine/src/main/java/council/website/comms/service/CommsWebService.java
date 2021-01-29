@@ -2,6 +2,7 @@ package council.website.comms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -14,8 +15,7 @@ import council.website.action.beans.Comms;
 @Service
 public class CommsWebService {
 	
-	@Autowired
-	@Qualifier("logicEngineUrl")
+	@Value("${logic.engine.location}")
 	private String logicEngineUrl;
 	
 	@Autowired

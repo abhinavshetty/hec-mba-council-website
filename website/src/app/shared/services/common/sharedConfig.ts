@@ -1,3 +1,3 @@
 export class SharedConfig {
-    static apiUrl = 'http://localhost:8080';
+    static apiUrl = 'http://webengine-env.eba-4sbtdcms.eu-west-3.elasticbeanstalk.com/';
 }

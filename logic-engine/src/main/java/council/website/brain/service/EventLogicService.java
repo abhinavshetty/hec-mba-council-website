@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -22,8 +22,7 @@ import council.website.event.beans.EventWorkflow;
 @Service
 public class EventLogicService {
 
-	@Autowired
-	@Qualifier("daoInterfaceUrl")
+	@Value("${dao.interface.service.location}")
 	private String daoInterfaceUrl;
 
 	private static final String EVENT_CONTROLLER_PATH = "/event";

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -30,8 +31,7 @@ import council.website.file.manager.service.FileResourceManagerService;
 @Service
 public class ClubWebService {
 	
-	@Autowired
-	@Qualifier("logicEngineUrl")
+	@Value("${logic.engine.location}")
 	private String logicEngineUrl;
 	
 	@Autowired

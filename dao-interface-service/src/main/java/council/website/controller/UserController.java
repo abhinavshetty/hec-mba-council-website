@@ -53,6 +53,11 @@ public class UserController {
 		return userService.getUserCredentials(request);
 	}
 	
+	@GetMapping(path = "/getSystemCredentials", produces = "application/json")
+	public List<UserLoginRequest> getSystemCredentials() {
+		return userService.getSystemCredentials();
+	}
+	
 	@GetMapping(path = "/getAllUsers", produces = "application/json")
 	public List<User> getAllUsers() {
 		return userService.getAllUsers();

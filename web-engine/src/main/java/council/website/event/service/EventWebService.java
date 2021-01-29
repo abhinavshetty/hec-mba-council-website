@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -31,8 +32,7 @@ public class EventWebService {
 
 	private static final String EVENT_LOGIC_CONTROLLER_PATH = "/event";
 
-	@Autowired
-	@Qualifier("logicEngineUrl")
+	@Value("${logic.engine.location}")
 	private String logicEngineUrl;
 
 	@Autowired

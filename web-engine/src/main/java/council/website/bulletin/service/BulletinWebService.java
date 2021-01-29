@@ -5,7 +5,7 @@ import java.net.MalformedURLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -31,8 +31,7 @@ public class BulletinWebService {
 
 	private static final String BULLETIN_LOGIC_CONTROLLER_PATH = "/bulletin";
 
-	@Autowired
-	@Qualifier("logicEngineUrl")
+	@Value("${logic.engine.location}")
 	private String logicEngineUrl;
 
 	@Autowired

@@ -68,5 +68,13 @@
 		USER_DATA_MBA_COUNCIL U INNER JOIN USER_PASSWORD_MBA_COUNCIL P ON P.FK_USER_ID = U.PK_USER_ID
 		WHERE U.EMAIL = #{request.userEmail}
 	</select>
+	
+	<select id="getSystemCredentials" resultType="council.website.user.beans.UserLoginRequest">
+		Select PROPERTY as userEmail,
+		VALUE as userPassword,
+		null as oldUserPassword
+		
+		FROM SYSTEM_CREDENTIALS
+	</select>
 
 </mapper>

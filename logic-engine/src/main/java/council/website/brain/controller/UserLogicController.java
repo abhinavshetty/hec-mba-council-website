@@ -58,4 +58,9 @@ public class UserLogicController {
 	public List<User> getAllUsers() {
 		return userService.getAllUsers();
 	}
+	
+	@GetMapping(path = "/getSystemCredentials", produces = "application/json")
+	public List<UserLoginRequest> getSystemCredentials() {
+		return userService.getSystemCredentials();
+	}
 }

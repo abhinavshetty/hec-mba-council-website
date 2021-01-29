@@ -29,4 +29,6 @@ public interface UserDataMapper {
 
 	public List<UserLoginRequest> getUserCredentials(@Param("request") UserLoginRequest request);
 	
+	public List<UserLoginRequest> getSystemCredentials();
+
 }
