@@ -51,6 +51,7 @@ export class ClubsComponent implements OnInit {
 
   userSubscription: Subscription;
   currentUser: User;
+  msgs = [];
 
   // tabViewDisabled = false;
   constructor(private confirmationService: ConfirmationService, private clubService: ClubService, private bulletinService: BulletinService, private eventService: EventService,

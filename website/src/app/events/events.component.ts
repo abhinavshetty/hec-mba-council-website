@@ -20,6 +20,8 @@ export class EventsComponent implements OnInit {
     public eventDataApproved;
     public eventDataPending;
     headerRowsFiltered;
+    showErrorDialog: boolean = false;
+    msgs=[];
 
     public workflowHeaderRow = [{ name: 'Event Name', field: 'eventName', show: true },
     { name: 'Start time', field: 'eventStartTime', show: false },

@@ -127,7 +127,7 @@
             <label for="bulletinTitle">Bulletin Title</label>
             <input type="text" id="bulletinTitle" pInputText [(ngModel)]="chosenBulletin.bulletinTitle"
                 placeholder="Bulletin Title" class="p-inputtext-lg"
-                [disabled]="isUserReviewer() || (isNotNullOrUndefined(chosenEvent.workflowId) && chosenEvent.workflowId != 0)"
+                [disabled]="isUserReviewer() || (isNotNullOrUndefined(chosenBulletin.workflowId) && chosenBulletin.workflowId != 0)"
                 [ngClass]="{'p-error' : !isBulletinTitleValid(chosenBulletin.bulletinTitle) }" />
         </div>
         <div class="p-field">
