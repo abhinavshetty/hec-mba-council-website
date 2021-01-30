@@ -98,13 +98,13 @@ public class UserLogicService {
 						commsService.sendEmailToNewUser(request);
 						response = new ActionResponse();
 						response.setResponseDetail(ActionStatus.CREATE_NEW_USER);
-						response.setResponseMessage(ActionStatus.CREATE_NEW_USER);
+						response.setResponseMessage(ActionStatus.ACTION_SUCCESS);
 						return response;
 					} else {
 						// error in adding a new user was encountered. Contact the system admin.
 						response = new ActionResponse();
 						response.setResponseDetail(ActionStatus.CREATE_NEW_USER_UNEXPECTED_ERROR);
-						response.setResponseMessage(ActionStatus.CREATE_NEW_USER_UNEXPECTED_ERROR);
+						response.setResponseMessage(ActionStatus.ACTION_ERROR);
 						return response;
 					}
 				}
@@ -112,7 +112,7 @@ public class UserLogicService {
 			} else {
 				response = new ActionResponse();
 				response.setResponseDetail(ActionStatus.NON_HEC_EMAIL_FOR_NEW_USER);
-				response.setResponseMessage(ActionStatus.NON_HEC_EMAIL_FOR_NEW_USER);
+				response.setResponseMessage(ActionStatus.ACTION_ERROR);
 				return response;
 			}
 		}
@@ -128,7 +128,7 @@ public class UserLogicService {
 
 		ActionResponse result = new ActionResponse();
 		result.setResponseDetail(ActionStatus.USER_DATA_MODIFICATION_SUCCESS);
-		result.setResponseMessage(ActionStatus.USER_DATA_MODIFICATION_SUCCESS);
+		result.setResponseMessage(ActionStatus.ACTION_SUCCESS);
 		return result;
 	}
 
@@ -283,18 +283,18 @@ public class UserLogicService {
 
 				response = new ActionResponse();
 				response.setResponseDetail(ActionStatus.NEW_PASSWORD_SENT);
-				response.setResponseMessage(ActionStatus.NEW_PASSWORD_SENT);
+				response.setResponseMessage(ActionStatus.ACTION_SUCCESS);
 			} else {
 				// user does not exist
 				response = new ActionResponse();
 				response.setResponseDetail(ActionStatus.USERNAME_INCORRECT);
-				response.setResponseMessage(ActionStatus.USERNAME_INCORRECT);
+				response.setResponseMessage(ActionStatus.ACTION_ERROR);
 			}
 
 		} else {
 			response = new ActionResponse();
 			response.setResponseDetail(ActionStatus.NON_HEC_EMAIL_FOR_NEW_USER);
-			response.setResponseMessage(ActionStatus.NON_HEC_EMAIL_FOR_NEW_USER);
+			response.setResponseMessage(ActionStatus.ACTION_ERROR);
 		}
 
 		return response;

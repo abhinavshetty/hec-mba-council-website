@@ -68,4 +68,6 @@ public class ActionStatus {
 	public static final String NEW_PASSWORD_SENT = "A new password has been sent to your registered email address.";
 
 	public static final String PASSWORD_RESET_SUBJECT = "Password reset on HEC MBA Life";
+
+	public static final String NEW_USER_ADD = "Your login details for HEC MBA Life website";
 }

@@ -59,7 +59,7 @@ public class CommsLogicService {
 	public void sendEmailToNewUser(User user) {
 		Comms email = new Comms();
 		email.setCommsTo(user.getUserEmail());
-		email.setCommsSubject(ActionStatus.PASSWORD_RESET_SUBJECT);
+		email.setCommsSubject(ActionStatus.NEW_USER_ADD);
 		String mailContent = "Hi " + user.getUserName() + ",\n\n";
 		mailContent = mailContent
 				+ "A new user has been created on the HEC MBA life website for you! Please use your HEC email and password "

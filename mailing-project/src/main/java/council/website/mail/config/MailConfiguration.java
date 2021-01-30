@@ -29,7 +29,8 @@ public class MailConfiguration {
 		for (UserLoginRequest property : properties) {
 			if (property.getUserEmail().equalsIgnoreCase("spring.mail.username")) {
 				accessKey = property.getUserPassword();
-			} else if (property.getUserEmail().equalsIgnoreCase("spring.mail.password")) {
+			}
+			if (property.getUserEmail().equalsIgnoreCase("spring.mail.password")) {
 				secretKey = property.getUserPassword();
 			}
 		}
