@@ -1,0 +1,264 @@
+<p-dialog [(visible)]="showAddClubPopup" *ngIf="isUserReviewer()" [style]="{width: '50%'}" [modal]="true"
+    [closeOnEscape]="true" [header]="popupHeader" (onHide)="cleanInputModels()">
+    <div class="p-fluid">
+        <div class="p-field p-d-flex">
+            <label for="clubName">Club Name</label>
+            <p-dropdown [showClear]="true" [filter]="true" filterBy="userName" editable="true"
+                [(ngModel)]="chosenClub.clubName" [options]="clubs" optionLabel="clubName" optionValue="clubName"></p-dropdown>
+        </div>
+        <div class="p-field">
+            <label for="clubLogo">Upload/update logo for club</label>
+            <p-fileUpload id="clubLogo" customUpload="true" (uploadHandler)="myUploader($event)" accept="image/*"
+                maxFileSize="1000000" [auto]="true">
+                <ng-template pTemplate="content">
+                    <p *ngIf="!fileUploaded">Your logo goes here</p>
+                    <ul *ngIf="uploadedFiles.length">
+                        <li *ngFor="let file of uploadedFiles">{{file.name}} - {{file.size}} bytes</li>
+                    </ul>
+                </ng-template>
+            </p-fileUpload>
+        </div>
+
+        <div class="p-field">
+            <p-button label="Add new club" icon="pi pi-plus" styleClass="p-button-lg p-m-2" (onClick)="addNewClub()">
+            </p-button>
+            <p-button label="Update club logo" icon="pi pi-plus" styleClass="p-button-lg p-m-2" (onClick)="updateClub()">
+            </p-button>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog [(visible)]="showAddMetadataPopup" *ngIf="isUserSubmitterForClub()"
+    [style]="{width: '50%'}" [modal]="true" [closeOnEscape]="true" [header]="popupHeader" (onHide)="cleanInputModels()">
+    <div class="p-fluid">
+        <div class="p-field p-d-flex">
+            <label for="metadataName">Metadata Title</label>
+            <input type="text" id="metadataName" pInputText [(ngModel)]="newMetadata.metadataName"
+                placeholder="Metadata Title" class="p-inputtext-lg"
+                [ngClass]="{'p-error' : !isNotNullOrUndefined(newMetadata.metadataName) }" />
+        </div>
+        <div class="p-field p-d-flex">
+            <label for="metadataDetail">Metadata Detail</label>
+            <input type="text" id="metadataDetail" pInputText [(ngModel)]="newMetadata.metadataDetail"
+                placeholder="Metadata Detail" class="p-inputtext-lg"
+                [ngClass]="{'p-error' : !isNotNullOrUndefined(newMetadata.metadataDetail) }" />
+        </div>
+
+        <div class="p-field">
+            <p-button label="Add New Club" icon="pi pi-plus" styleClass="p-button-lg" (onClick)="addNewClub()">
+            </p-button>
+        </div>
+    </div>
+</p-dialog>
+<p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="10000" rejectButtonStyleClass="p-button-text">
+</p-confirmDialog>
+
+<p-dialog [style]="{width : '50%'}" position="top" [(visible)]="showClubPopup"
+    (onHide)="hideClubOverlay()" [header]="chosenClub.clubName">
+    <ng-template pTemplate>
+        <p-tabView (onChange)="onClubTabChange($event)">
+            <p-tabPanel header="Overview">
+                <ng-template pTemplate="content">
+                    <p-scrollPanel>
+                        <div *ngIf="chosenClubMetadata.length === 0">
+                            <p-button *ngIf="isUserSubmitterForClub()" icon="pi pi-plus"
+                                (click)="onAddMetadataSectionClick()" styleClass="p-button-text"
+                                label="Add new metadata section"></p-button>
+
+                            <p-button *ngIf="isUserSubmitterForClub()" icon="pi pi-trash"
+                                (click)="onDeleteMetadataSectionClick(item)" styleClass="p-button-text"
+                                label="Delete metadata section"></p-button>
+                        </div>
+                        <p-accordion>
+                            <p-accordionTab *ngFor="let item of chosenClubMetadata; let i = index" [selected]="i === 0">
+                                <ng-template pTemplate="header">
+                                    {{ item.metadataName }}
+                                    <p-button *ngIf="isUserSubmitterForClub()" icon="pi pi-plus"
+                                        (click)="onAddMetadataSectionClick()" styleClass="p-button-text"
+                                        label="Add new metadata section"></p-button>
+
+                                    <p-button *ngIf="isUserSubmitterForClub()" icon="pi pi-trash"
+                                        (click)="onDeleteMetadataSectionClick(item)" styleClass="p-button-text"
+                                        label="Delete metadata section"></p-button>
+                                </ng-template>
+                                <ng-template pTemplate="content">
+                                    <p>{{ item.metadataDetail }}</p>
+                                </ng-template>
+                            </p-accordionTab>
+                        </p-accordion>
+                    </p-scrollPanel>
+                </ng-template>
+            </p-tabPanel>
+            <p-tabPanel header="Events">
+                <p-scrollPanel>
+                    <ng-template pTemplate="content">
+                        <p-table #etA [columns]="eventHeaderRowsFiltered" [value]="eventDataForClub"
+                            class="table table-hover table-striped" dataKey="eventId">
+                            <ng-template pTemplate="header" let-columns>
+                                <tr>
+                                    <th *ngFor="let col of columns">
+                                        {{col.name}}
+                                    </th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-event let-columns="columns" let-expanded="expanded">
+                                <tr>
+                                    <td *ngFor="let col of columns">
+                                        <span>{{event[col.field]}}</span>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage" let-columns>
+                                <tr>
+                                    <td [attr.colspan]="eventHeaderRowsFiltered.length">
+                                        No records found
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </ng-template>
+                </p-scrollPanel>
+            </p-tabPanel>
+            <p-tabPanel header="Bulletins">
+                <p-scrollPanel [style]="{width: '100%'}">
+                    <ng-template pTemplate="content">
+                        <p-table #etA [columns]="bulletinHeaderRowsFiltered" [value]="bulletinDataForClub"
+                            class="table table-hover table-striped" dataKey="bulletinId">
+                            <ng-template pTemplate="body" let-bulletin let-columns="columns" let-expanded="expanded">
+                                <tr>
+                                    <td *ngFor="let col of columns">
+                                        <span>{{bulletin[col.field]}}</span>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage" let-columns>
+                                <tr>
+                                    <td [attr.colspan]="bulletinHeaderRowsFiltered.length">
+                                        No records found
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </ng-template>
+                </p-scrollPanel>
+            </p-tabPanel>
+            <p-tabPanel header="Club Hierarchy">
+                <p-scrollPanel [style]="{width: '100%'}">
+                    <ng-template pTemplate="content">
+                        <p-organizationChart [value]="hierarchyData" styleClass="company">
+                            <ng-template let-node pTemplate="leaf">
+                                <span style="font-weight:bold">{{node.label}}</span>
+                            </ng-template>
+                            <ng-template let-node pTemplate="default">
+                                {{node.label}}
+                            </ng-template>
+                        </p-organizationChart>
+                    </ng-template>
+
+                </p-scrollPanel>
+            </p-tabPanel>
+
+            <p-tabPanel header="Resources">
+                <p-scrollPanel [style]="{width: '100%'}">
+                    <ng-template pTemplate="content">
+                        <p-table #etA [columns]="resourcesHeader" [value]="resourcesDataForClub"
+                            class="table table-hover table-striped">
+                            <ng-template pTemplate="body" let-resource let-columns="columns" let-expanded="expanded">
+                                <tr>
+                                    <td *ngFor="let col of columns">
+                                        <a (click)="getResource(resource)"><span>{{resource[col.field]}}</span></a>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage" let-columns>
+                                <tr>
+                                    <td [attr.colspan]="resourcesHeader.length">
+                                        No records found
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                        <div class="p-field" *ngIf="isUserSubmitterForClub()">
+                            <label for="clubResource">Upload resources for club</label>
+                            <p-fileUpload id="clubResource" customUpload="true" (uploadHandler)="myUploader($event)"
+                                accept="image/*" maxFileSize="1000000" [auto]="true">
+                                <ng-template pTemplate="content">
+                                    <p *ngIf="!fileUploaded">Your logo goes here</p>
+                                    <ul *ngIf="uploadedFiles.length">
+                                        <li *ngFor="let file of uploadedFiles">{{file.name}} - {{file.size}} bytes</li>
+                                    </ul>
+                                </ng-template>
+                            </p-fileUpload>
+                        </div>
+                    </ng-template>
+                </p-scrollPanel>
+            </p-tabPanel>
+        </p-tabView>
+    </ng-template>
+</p-dialog>
+
+<div class="main-content">
+    <div class="p-fluid">
+        <p-messages [(value)]="msgs" class="p-fluid p-jc-center"></p-messages>
+        <div class="p-field" *ngIf="isUserReviewer()">
+            <p-button label="Add or update a club" pRipple icon="pi pi-plus" styleClass="p-button-lg"
+                (onClick)="onAddButtonClick()">
+            </p-button>
+        </div>
+        <div class="p-fluid">
+            <p-accordion>
+                <p-accordionTab *ngFor="let item of mbaCouncilMetadata; let i = index" [selected]="i == 0">
+                    <ng-template pTemplate="header">
+                        <span style="float: left">{{ item.metadataName }}</span>
+
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <p>{{ item.metadataDetail }}</p>
+                    </ng-template>
+
+                </p-accordionTab>
+            </p-accordion>
+            <br>
+        </div>
+        <div class="card">
+            <div class="header">
+                <h4 class="title">Clubs at the HEC Paris MBA</h4>
+                <p class="category">Click on individual icons to know more </p>
+            </div>
+
+            <p-dataView #dv [value]="clubs" [paginator]="true" [rows]="5" filterBy="clubName" [sortField]="sortField"
+                layout="grid">
+                <ng-template pTemplate="header">
+                    <div class="p-d-flex p-flex-column p-flex-md-row p-jc-md-between">
+                        <span class="p-input-icon-left p-mb-2 p-mb-md-0">
+                            <i class="pi pi-search"></i>
+                            <input type="search" pInputText placeholder="Search by Name"
+                                (input)="dv.filter($event.target.value)">
+                        </span>
+                        <p-dataViewLayoutOptions></p-dataViewLayoutOptions>
+                    </div>
+                </ng-template>
+                <ng-template let-club pTemplate="listItem">
+                    <div class="p-col-12">
+                        <div class="product-list-item" (click)="onCardClick(club)">
+                            <div class="product-list-detail">
+                                <div class="product-name">{{club.clubName}}</div>
+                                <img [src]="getLogoForClubUrl(club)" />
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+                <ng-template let-club pTemplate="gridItem">
+                    <div class="p-col-12 p-md-4">
+                        <div class="product-grid-item card" (click)="onCardClick(club)">
+                            <div class="product-grid-item-content">
+                                <div class="product-name">{{club.clubName}}</div>
+                                <img [src]="getLogoForClubUrl(club)" />
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+            </p-dataView>
+        </div>
+    </div>
+</div>

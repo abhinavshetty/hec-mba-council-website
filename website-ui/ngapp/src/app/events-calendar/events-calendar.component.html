@@ -1,0 +1,124 @@
+<div class="row text-center">
+    <div class="col-md-5">
+        <div class="btn-group">
+            <div class="btn btn-primary" mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate"
+                (viewDateChange)="closeOpenMonthViewDay(); fetchEvents();">
+                Previous
+            </div>
+            <div class="btn btn-outline-secondary" mwlCalendarToday [(viewDate)]="viewDate">
+                Today
+            </div>
+            <div class="btn btn-primary" mwlCalendarNextView [view]="view" [(viewDate)]="viewDate"
+                (viewDateChange)="closeOpenMonthViewDay(); fetchEvents();">
+                Next
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <h5>{{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}</h5>
+    </div>
+    <div class="col-md-5">
+        <div class="btn-group">
+            <div class="btn btn-primary" (click)="setView(CalendarView.Month);fetchEvents();"
+                [class.active]="view === CalendarView.Month">
+                Month
+            </div>
+            <div class="btn btn-primary" (click)="setView(CalendarView.Week);fetchEvents();"
+                [class.active]="view === CalendarView.Week">
+                Week
+            </div>
+            <div class="btn btn-primary" (click)="setView(CalendarView.Day);fetchEvents();"
+                [class.active]="view === CalendarView.Day">
+                Day
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="events">
+    <div #calendarTop [ngSwitch]="view">
+        <mwl-calendar-month-view *ngSwitchCase="CalendarView.Month" [viewDate]="viewDate" [events]="events"
+            [activeDayIsOpen]="activeDayIsOpen" (dayClicked)="dayClicked($event.day)"
+            (eventClicked)="handleEvent($event.event)">
+        </mwl-calendar-month-view>
+        <mwl-calendar-week-view *ngSwitchCase="CalendarView.Week" [viewDate]="viewDate" [events]="events"
+            (eventClicked)="handleEvent($event.event)">
+        </mwl-calendar-week-view>
+        <mwl-calendar-day-view *ngSwitchCase="CalendarView.Day" [viewDate]="viewDate" [events]="events"
+            (eventClicked)="handleEvent($event.event)">
+        </mwl-calendar-day-view>
+    </div>
+</div>
+
+
+<p-dialog *ngIf="showEventDialog" [style]="{width : '60%'}" [closeOnEscape]="true" [appendTo]="calendarTop"
+    [(visible)]="showEventDialog" [position]="bottom-right" [focusOnShow]="true" (onHide)="showEventDialog=false;">
+
+    <ng-template pTemplate>
+        <div class="p-fluid">
+            <div class="p-field p-d-flex p-jc-center">
+                <h5 style="font-weight: bold;"> The {{ chosenEvent.host }} presents</h5>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <span> in partnership with {{ chosenEvent.eventPartners }}</span>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <h3 style="font-weight: bold;"> {{ chosenEvent.eventName }}</h3>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <p-inplace>
+                    <ng-template pTemplate="display">
+                        <p-button label="Click to view uploaded poster" styleClass="p-button-lg"></p-button>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <div class="p-d-flex p-jc-center">
+                            <img [src]="getPosterUrl(chosenEvent)" alt="No poster has been uploaded." />
+                        </div>
+                    </ng-template>
+                </p-inplace>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <h6>Location: {{ chosenEvent.eventAddress }}</h6>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <h6>Duration: {{ chosenEvent.eventStartTime | date : 'dd-MM-yyyy HH:mm z' }} to {{
+                    chosenEvent.eventEndTime | date : 'dd-MM-yyyy HH:mm z'}}</h6>
+            </div>
+            <div class="p-field p-d-flex p-jc-center" *ngIf="isNotNullOrUndefined(chosenEvent.eventDesc)">
+                <p>{{ chosenEvent.eventDesc }}</p>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <h6>Other details:</h6>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <h6>Language for the event: {{ chosenEvent.eventLanguage }}</h6>
+            </div>
+            <div class="p-grid p-jc-center">
+                <div class="p-col"
+                    *ngIf="isNotNullOrUndefined(chosenEvent.maxTargetAudience) && chosenEvent.maxTargetAudience != 0">
+                    Max target audience: {{ chosenEvent.maxTargetAudience }}
+                </div>
+                <div class="p-col"
+                    *ngIf="isNotNullOrUndefined(chosenEvent.ticketPrice) && chosenEvent.ticketPrice != 0">
+                    Ticket price: {{ chosenEvent.ticketPrice }} Euro
+                </div>
+                <div class="p-col" *ngIf="isNotNullOrUndefined(chosenEvent.ticketPurchaseLink)">
+                    Buy your tickets at: {{ chosenEvent.ticketPurchaseLink }}
+                </div>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <h6 *ngIf="isNotNullOrUndefined(chosenEvent.eventRegistrationStartTime)">Registration starts at {{
+                    chosenEvent.eventRegistrationStartTime | date : 'dd-MM-yyyy HH:mm z' }}
+                </h6>
+                <h6 *ngIf="isNotNullOrUndefined(chosenEvent.eventRegistrationEndTime)">Registration closes at {{
+                    chosenEvent.eventRegistrationEndTime | date : 'dd-MM-yyyy HH:mm z'}}</h6>
+            </div>
+            <div class="p-field p-d-flex p-jc-center">
+                <a [href]="chosenEvent.facebookLink"><i class="fa fa-facebook" *ngIf="isNotNullOrUndefined(chosenEvent.facebookLink)"></i></a>
+                <a [href]="chosenEvent.instagramLink"><i class="fa fa-instagram" *ngIf="isNotNullOrUndefined(chosenEvent.instagramLink)"></i></a>
+                <a [href]="chosenEvent.twitterLink"><i class="fa fa-twitter" *ngIf="isNotNullOrUndefined(chosenEvent.twitterLink)"></i></a>
+            </div>
+
+        </div>
+    </ng-template>
+
+</p-dialog>

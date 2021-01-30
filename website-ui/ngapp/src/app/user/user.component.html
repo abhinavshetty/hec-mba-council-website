@@ -1,0 +1,147 @@
+<div class="main-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <p-messages [(value)]="msgs"></p-messages>
+                <div class="card">
+                    <div class="header">
+                        <h4 class="title">Edit Profile</h4>
+                    </div>
+                    <div class="content">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label>User Name</label>
+                                    <input type="text" class="form-control" placeholder="User name"
+                                        [(ngModel)]="currentUser.userName" [disabled]="true" />
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">Email address</label>
+                                    <input type="email" class="form-control" placeholder="Email"
+                                        [(ngModel)]="currentUser.userEmail" [disabled]="true" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>User Club</label>
+                                    <input type="text" class="form-control" disabled placeholder="Your club goes here"
+                                        [disabled]="true" [(ngModel)]="currentUser.userClub">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row p-mx-auto justify-content-md-center align-items-center">
+
+                            <button (click)="startChangePassword()" class="btn btn-info btn-fill">Change
+                                Password</button>
+                            <button (click)="startChangeUserAccess()" class="btn btn-info btn-fill"
+                                *ngIf="isUserAdmin()">Change User Access</button>
+                            <button (click)="startChangeCommsEmail()" class="btn btn-info btn-fill"
+                                *ngIf="isUserAdmin()">Change periodic email for social media shares</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p-dialog [(visible)]="showChangePasswordPopup" [style]="{width: '25%'}" [modal]="true" [closeOnEscape]="true"
+    [header]="popupHeader" (onHide)="cleanDialogModels()">
+    <div class="p-fluid">
+        <div class="p-field">
+            <label for="oldPassword">Old password</label>
+            <input type="password" id="oldPassword" pInputText [(ngModel)]="oldPassword" placeholder="Your old password"
+                class="p-inputtext-lg" />
+            <small id="oldPassword-help" class="p-error" *ngIf="isOldPasswordIncorrect">Passwords do
+                not match.</small>
+        </div>
+        <div class="p-field">
+            <label for="newPassword">New password</label>
+            <input type="password" id="newPassword" pInputText [(ngModel)]="newPassword" placeholder="Your new password"
+                class="p-inputtext-lg" />
+        </div>
+        <div class="p-field">
+            <label for="newPasswordConfirmation">New password confirmation</label>
+            <input type="password" id="newPasswordConfirmation" aria-describedby="newPassword-help" pInputText
+                [(ngModel)]="newPasswordConfirmation" placeholder="Your new password again to confirm"
+                class="p-inputtext-lg" />
+            <small id="newPassword-help" class="p-error" *ngIf="newPassword !== newPasswordConfirmation">Passwords do
+                not match.</small>
+        </div>
+
+        <div class="p-field">
+            <p-button label="Change password" styleClass="p-button-lg" (onClick)="changePassword()">
+            </p-button>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog [(visible)]="showChangeCommsPopup" [style]="{width: '40%'}" [modal]="true" [closeOnEscape]="true"
+    [header]="popupHeader" (onHide)="cleanDialogModels()">
+    <div class="p-fluid">
+        <div class="p-field">
+            <label for="commsTo">Send to (enter multiple emails separated by a semicolon. Also add a semicolon at the end if you want to send to multiple people )</label>
+            <input type="text" id="commsTo" pInputText [(ngModel)]="currentComms.commsTo" placeholder="Send list"
+                class="p-inputtext-lg" />
+        </div>
+        <div class="p-field">
+            <label for="commsSubject">Email subject</label>
+            <input type="text" id="commsSubject" pInputText [(ngModel)]="currentComms.commsSubject" placeholder="Email subject"
+                class="p-inputtext-lg" />
+        </div>
+        <div class="p-field">
+            <label for="commsDetailTemplate">Email contents (links will be appended after this)</label>
+            <textarea pInputTextarea id="commsDetailTemplate" class="p-inputtext-lg"
+                placeholder="Email contents" [(ngModel)]="currentComms.commsDetailTemplate"></textarea>
+        </div>
+
+        <div class="p-field">
+            <p-button label="Edit Email" styleClass="p-button-lg" (onClick)="changeCommsEmail()">
+            </p-button>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog [(visible)]="showChangeUserAccessPopup" [style]="{width: '25%'}" [modal]="true" [closeOnEscape]="true"
+    [header]="popupHeader" (onHide)="cleanDialogModels()">
+    <div class="p-fluid">
+        <div class="p-field">
+            <label for="userName">User name</label>
+            <p-dropdown [showClear]="true" [filter]="true" filterBy="userName" editable="true"
+                [(ngModel)]="selectedUser" [options]="activeUsers" optionLabel="userName"></p-dropdown>
+        </div>
+        <div class="p-field">
+            <label for="userEmail">User email</label>
+            <input type="text" id="userEmail" *ngIf="selectedUser" pInputText [(ngModel)]="selectedUser.userEmail" [disabled]="true"
+                class="p-inputtext-lg" />
+        </div>
+        <div class="p-field">
+            <label for="userClub">User club</label>
+            <p-dropdown *ngIf="selectedUser" [showClear]="true" [filter]="true" filterBy="userName" editable="true"
+                [(ngModel)]="selectedUser.userClub" [options]="clubs" optionLabel="clubName" optionValue="clubName">
+            </p-dropdown>
+        </div>
+        <div class="p-field">
+            <label for="currentUserRole">Current user role</label>
+            <input type="text" *ngIf="selectedUser" id="currentUserRole" pInputText [(ngModel)]="selectedUser.userRole" [disabled]="true"
+                class="p-inputtext-lg" />
+        </div>
+
+        <div class="p-field">
+            <label for="newUserRole">New user role</label>
+            <p-dropdown id="newUserRole" *ngIf="selectedUser" [(ngModel)]="newUserRole" optionLabel="name" optionValue="name"
+                [options]="userRoles"></p-dropdown>
+        </div>
+
+        <div class="p-field">
+            <p-button label="Change user access" *ngIf="selectedUser" styleClass="p-button-lg" (onClick)="changeUserAccess()">
+            </p-button>
+        </div>
+    </div>
+</p-dialog>

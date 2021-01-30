@@ -1,0 +1,224 @@
+<div class="main-content">
+    <div class="p-fluid">
+        <div class="p-field" *ngIf="isUserSubmitter()">
+            <p-button label="Add a new bulletin" pRipple icon="pi pi-plus" styleClass="p-button-lg"
+                (onClick)="onAddButtonClick()">
+            </p-button>
+        </div>
+        <div class="card">
+            <div class="header">
+                <h4 class="title">Your approved bulletins</h4>
+                <p class="category">Here you can see bulletins that are approved. They will show on the home screen
+                    between the start time and end time. Click on a bulletin to see details.</p>
+            </div>
+            <p-table #btA [columns]="headerRowsFiltered" [value]="bulletinBoardDataApproved"
+                class="table table-hover table-striped" rowExpandMode="single" dataKey="bulletinId">
+                <ng-template pTemplate="caption">
+                    <div class="p-d-flex">
+                        <span class="p-input-icon-left p-ml-auto">
+                            <input pInputText type="text" (input)="btA.filterGlobal($event.target.value, 'contains')"
+                                placeholder="Search keyword" />
+                        </span>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="header" let-columns>
+                    <tr>
+                        <th style="width: 3%"></th>
+                        <th *ngFor="let col of columns">
+                            {{col.name}}
+                        </th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-bulletin let-columns="columns" let-expanded="expanded">
+
+                    <tr>
+                        <td style="width: 1%">
+                            <div type="button" pButton pRipple [pRowToggler]="bulletin" styleClass="rowButton"
+                                [icon]="expanded ? 'fa fa-chevron-down' : 'fa fa-chevron-right'"
+                                (click)="onRowExpandClick(bulletin)"></div>
+                        </td>
+                        <td *ngFor="let col of columns">
+                            {{bulletin[col.field]}}
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="rowexpansion" let-product>
+                    <tr>
+                        <td [attr.colspan]="headerRowsFiltered.length">
+                            <div class="p-d-flex p-jc-center">
+                                <img [src]="bulletinPoster" alt="No poster has been uploaded." />
+                                <br>
+                            </div>
+                            <div class="p-d-flex p-jc-center">
+                                <p>{{ product.bulletinDesc }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage" let-columns>
+                    <tr>
+                        <td [attr.colspan]="headerRowsFiltered.length">
+                            No records found
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+
+        <p-messages [(value)]="msgs"></p-messages>
+        <div class="card">
+            <div class="header">
+                <h4 class="title">Your pending bulletins</h4>
+                <p class="category">Here you can see bulletins that are pending approval. They will show on the home
+                    screen after approval from the Council.</p>
+            </div>
+            <p-table #btA [columns]="workflowHeaderRow" [value]="bulletinBoardDataPending"
+                class="table table-hover table-striped" dataKey="workflowId">
+                <ng-template pTemplate="caption">
+                    <div class="p-d-flex">
+                        <span class="p-input-icon-left p-ml-auto">
+                            <input pInputText type="text" (input)="btA.filterGlobal($event.target.value, 'contains')"
+                                placeholder="Search keyword" />
+                        </span>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="header" let-columns>
+                    <tr>
+                        <th *ngFor="let col of columns">
+                            <h5 style="font-weight: bold;">{{col.name}}</h5>
+                        </th>
+                        <th style="width: 2%"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-bulletin let-columns="columns" let-expanded="expanded">
+
+                    <tr>
+                        <td *ngFor="let col of columns">
+                            <span>{{bulletin[col.field]}}</span>
+                        </td>
+                        <td>
+                            <div *ngIf="isUserSubmitter()">
+                                <p-button icon="fa fa-edit" (onClick)="onRowEditClick(bulletin)">
+                                </p-button>
+                            </div>
+                            <div *ngIf="isUserReviewer()">
+                                <p-button icon="fa fa-edit" label="Approve/Reject"
+                                    (onClick)="onApproveRejectClick(bulletin)">
+                                </p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage" let-columns>
+                    <tr>
+                        <td [attr.colspan]="headerRowsFiltered.length">
+                            No records found
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</div>
+<p-dialog [(visible)]="showBulletinPopup" [style]="{width: '50%'}" [modal]="true" [closeOnEscape]="true"
+    [header]="popupHeader" (onHide)="cleanInputModels()">
+    <div class="p-fluid">
+        <div class="p-field p-d-flex">
+            <label for="bulletinTitle">Bulletin Title</label>
+            <input type="text" id="bulletinTitle" pInputText [(ngModel)]="chosenBulletin.bulletinTitle"
+                placeholder="Bulletin Title" class="p-inputtext-lg"
+                [disabled]="isUserReviewer() || (isNotNullOrUndefined(chosenBulletin.workflowId) && chosenBulletin.workflowId != 0)"
+                [ngClass]="{'p-error' : !isBulletinTitleValid(chosenBulletin.bulletinTitle) }" />
+        </div>
+        <div class="p-field">
+            <label for="bulletinDesc">Bulletin Description</label>
+            <textarea pInputTextarea id="bulletinDesc" [disabled]="isUserReviewer()" class="p-inputtext-lg"
+                placeholder="Bulletin Description" [(ngModel)]="chosenBulletin.bulletinDesc"></textarea>
+        </div>
+
+        <div class="p-formgrid p-grid" *ngIf="isUserSubmitter()">
+            <div class="p-field p-col">
+                <label for="bulletinStartTime">Bulletin start time</label>
+                <p-calendar id="bulletinStartTime" aria-describedby="startTime-help"
+                    [(ngModel)]="chosenBulletin.bulletinStartTime" class="p-inputtext-lg"
+                    placeholder="Bulletin start time (cannot be empty)">
+                </p-calendar>
+                <small *ngIf="!isNotNullOrUndefined(chosenBulletin.bulletinStartTime)" id="startTime-help"
+                    class="p-invalid">Bulletin end time is invalid.</small>
+            </div>
+
+            <div class="p-field p-col">
+                <label for="bulletinEndTime">Bulletin end time</label>
+                <p-calendar id="bulletinEndTime" [(ngModel)]="chosenBulletin.bulletinEndTime"
+                    aria-describedby="endTime-help" class="p-inputtext-lg"
+                    placeholder="Bulletin end time (must be greater than start time)">
+                </p-calendar>
+                <small *ngIf="!isBulletinEndTimeValid(chosenBulletin.bulletinStartTime, chosenBulletin.bulletinEndTime)"
+                    id="endTime-help" class="p-invalid">Bulletin end time is invalid.</small>
+            </div>
+        </div>
+
+        <div class="p-field">
+            <label for="clubName">Club Name</label>
+            <input type="text" id="clubName" pInputText placeholder="Club Name" class="p-inputtext-lg" [disabled]="true"
+                [(ngModel)]="chosenBulletin.clubName" />
+        </div>
+
+        <div class="p-field" *ngIf="bulletinPoster">
+            <p-inplace>
+                <ng-template pTemplate="display">
+                    <p-button label="Click to view uploaded poster" styleClass="p-button-lg"></p-button>
+                </ng-template>
+                <ng-template pTemplate="content">
+                    <div class="p-d-flex p-jc-center">
+                        <img [src]="bulletinPoster" alt="No poster has been uploaded." />
+                    </div>
+                </ng-template>
+            </p-inplace>
+        </div>
+        <div class="p-field">
+            <label for="bulletinPoster">Upload/update poster for bulletin</label>
+            <p-fileUpload id="bulletinPoster" *ngIf="isUserSubmitter()" customUpload="true"
+                (uploadHandler)="myUploader($event)" accept="image/*" maxFileSize="1000000" [auto]="true">
+                <ng-template pTemplate="content">
+                    <p *ngIf="!fileUploadedForPoster">Your files go here</p>
+                    <ul *ngIf="uploadedFiles.length">
+                        <li *ngFor="let file of uploadedFiles">{{file.name}} - {{file.size}} bytes</li>
+                    </ul>
+                </ng-template>
+            </p-fileUpload>
+        </div>
+
+        <div class="p-field" *ngIf="isNotNullOrUndefined(chosenBulletin.reviewComments)">
+            <label for="reviewComments">Comments from reviews</label>
+            <textarea id="reviewComments" pInputTextarea class="p-inputtext-lg" placeholder="Review Comments"
+                [(ngModel)]="chosenBulletin.reviewComments"></textarea>
+        </div>
+
+        <div class="p-field" *ngIf="isUserSubmitter()">
+            <p-button *ngIf="!isRowEdit" label="Add New Bulletin" icon="pi pi-plus" styleClass="p-button-lg"
+                (onClick)="addNewBulletin()">
+            </p-button>
+            <p-button *ngIf="isRowEdit" label="Update Bulletin" [style]="{background:'grey'}" styleClass="p-button-lg"
+                (onClick)="updateBulletinWorkflow()">
+            </p-button>
+        </div>
+
+        <div class="p-field" *ngIf="isUserReviewer()">
+            <p-button label="Approve" [style]="{background:'green'}" (onClick)="approveBulletin()">
+            </p-button>
+            <p-button label="Reject" [style]="{background:'red'}" (onClick)="rejectBulletin()">
+            </p-button>
+            <p-button label="Update" [style]="{background:'grey'}" (onClick)="updateBulletinWorkflow()">
+            </p-button>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog header="Errors in bulletin!" [(visible)]="showErrorDialog" [modal]="true" [style]="{width: '50vw'}"
+    [baseZIndex]="10000" [draggable]="false" [resizable]="false">
+    <p class="p-m-0">There are errors in the bulletin being added/modified. Please fix the errors before submission.</p>
+    <ng-template pTemplate="footer">
+        <p-button icon="pi pi-check" (click)="showErrorDialog=false" label="Ok" styleClass="p-button-text"></p-button>
+    </ng-template>
+</p-dialog>
